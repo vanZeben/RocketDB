@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@types/pg": "^8.6.1",
+    "crypto-js": "^4.1.1",
     "electron-serve": "^1.1.0",
     "electron-store": "^8.0.0",
     "pg": "^8.7.1",
