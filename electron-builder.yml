@@ -1,0 +1,12 @@
+appId: com.vanzeben.rocketDb
+productName: RocketDB
+copyright: Copyright © 2021 Ryan van Zeben
+directories:
+  output: dist
+  buildResources: resources
+files:
+  - from: .
+    filter:
+      - package.json
+      - app
+publish: null
