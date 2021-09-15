@@ -10,7 +10,7 @@ const { Panel } = Collapse;
 
 export const ErdView = () => {
   const [connection] = useContext(ConnectionData);
-  const canvasRef = useRef<HTMLCanvasElement>();
+  const [svgLines, setSvgLines] = useState(undefined);
   const [tables, setTables] = useState([]);
   const getTables = async () => {
     const { rows: tables } = await connection.client.query(sql`
@@ -191,43 +191,33 @@ order by
             const offsetTarget = cumulativeOffset(targetElement);
 
             lines.push(
-              <>
-                <line
-                  x1={offsetCurrent.offsetLeft + currentElement.clientWidth}
-                  y1={offsetCurrent.offsetTop + 12}
-                  x2={
-                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
-                  }
-                  y2={offsetCurrent.offsetTop + 12}
-                  stroke="black"
-                />
-                <line
-                  x1={
-                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
-                  }
-                  y1={offsetCurrent.offsetTop + 12}
-                  x2={
-                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
-                  }
-                  y2={offsetTarget.offsetTop + 12}
-                  stroke="black"
-                />
-                <line
-                  x1={
-                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
-                  }
-                  y1={offsetTarget.offsetTop + 12}
-                  x2={offsetTarget.offsetLeft + targetElement.clientWidth + 10}
-                  y2={offsetTarget.offsetTop + 12}
-                  stroke="black"
-                />
-              </>
+              <line
+                x1={offsetCurrent.offsetLeft + currentElement.clientWidth}
+                y1={offsetCurrent.offsetTop + 12}
+                x2={offsetCurrent.offsetLeft + currentElement.clientWidth + 10}
+                y2={offsetCurrent.offsetTop + 12}
+                stroke="black"
+              />,
+              <line
+                x1={offsetCurrent.offsetLeft + currentElement.clientWidth + 10}
+                y1={offsetCurrent.offsetTop + 12}
+                x2={offsetCurrent.offsetLeft + currentElement.clientWidth + 10}
+                y2={offsetTarget.offsetTop + 12}
+                stroke="black"
+              />,
+              <line
+                x1={offsetCurrent.offsetLeft + currentElement.clientWidth + 10}
+                y1={offsetTarget.offsetTop + 12}
+                x2={offsetTarget.offsetLeft + targetElement.clientWidth + 10}
+                y2={offsetTarget.offsetTop + 12}
+                stroke="black"
+              />
             );
           }
         }
       }
     }
-    return (
+    setSvgLines(
       <div
         style={{
           position: "absolute",
@@ -247,10 +237,15 @@ order by
       </div>
     );
   };
+  useEffect(() => {
+    if (tables.length) {
+      drawConnections();
+    }
+  }, [tables]);
 
   useEffect(() => {
     fetchSchema();
-  }, [name]);
+  }, []);
 
   return (
     <div style={{ display: "flex", flexWrap: "wrap", position: "relative" }}>
@@ -275,7 +270,7 @@ order by
           </table>
         </Card>
       ))}
-      {drawConnections()}
+      {svgLines}
     </div>
   );
 };
