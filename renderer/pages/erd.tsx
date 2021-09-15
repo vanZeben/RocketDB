@@ -1,5 +1,5 @@
 import { useRouter } from "next/dist/client/router";
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import ConnectionData from "../utils/context/ConnectionDataContext";
 import sql from "sql-template-strings";
 import { Tag, Layout, Collapse, Table, Menu, Card, Divider } from "antd";
@@ -10,7 +10,7 @@ const { Panel } = Collapse;
 
 export const ErdView = () => {
   const [connection] = useContext(ConnectionData);
-
+  const canvasRef = useRef<HTMLCanvasElement>();
   const [tables, setTables] = useState([]);
   const getTables = async () => {
     const { rows: tables } = await connection.client.query(sql`
@@ -158,27 +158,124 @@ order by
       console.error(err);
     }
   };
+  const cumulativeOffset = function (element) {
+    var top = 0,
+      left = 0;
+    var parentCount = 0;
+    do {
+      top += element.offsetTop || 0;
+      left += element.offsetLeft || 0;
+      element = element.offsetParent;
+      parentCount++;
+    } while (element && parentCount < 3);
+
+    return {
+      offsetTop: top,
+      offsetLeft: left,
+    };
+  };
+
+  const drawConnections = () => {
+    const lines = [];
+    for (const table of tables) {
+      for (const column of table.columns) {
+        if (column.isFK) {
+          const currentElement = document.getElementById(
+            `${table.name}-${column.column_name}`
+          );
+          const targetElement = document.getElementById(
+            `${column.foreign_key_table}-${column.foreign_key_column}`
+          );
+          if (targetElement) {
+            const offsetCurrent = cumulativeOffset(currentElement);
+            const offsetTarget = cumulativeOffset(targetElement);
+
+            lines.push(
+              <>
+                <line
+                  x1={offsetCurrent.offsetLeft + currentElement.clientWidth}
+                  y1={offsetCurrent.offsetTop + 12}
+                  x2={
+                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
+                  }
+                  y2={offsetCurrent.offsetTop + 12}
+                  stroke="black"
+                />
+                <line
+                  x1={
+                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
+                  }
+                  y1={offsetCurrent.offsetTop + 12}
+                  x2={
+                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
+                  }
+                  y2={offsetTarget.offsetTop + 12}
+                  stroke="black"
+                />
+                <line
+                  x1={
+                    offsetCurrent.offsetLeft + currentElement.clientWidth + 10
+                  }
+                  y1={offsetTarget.offsetTop + 12}
+                  x2={offsetTarget.offsetLeft + targetElement.clientWidth + 10}
+                  y2={offsetTarget.offsetTop + 12}
+                  stroke="black"
+                />
+              </>
+            );
+          }
+        }
+      }
+    }
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+        }}
+      >
+        <svg
+          width="100%"
+          height="100%"
+          style={{ position: "absolute", left: 0, top: 0 }}
+        >
+          {lines}
+        </svg>
+      </div>
+    );
+  };
 
   useEffect(() => {
     fetchSchema();
   }, [name]);
 
   return (
-    <div style={{ display: "flex", flexWrap: "wrap" }}>
+    <div style={{ display: "flex", flexWrap: "wrap", position: "relative" }}>
       {tables.map((table) => (
         <Card size="small" title={table.name}>
           <table>
-            {table.columns.map((column) => (
-              <tr>
-                <td>{column.isPK && <KeyOutlined />}</td>
-                <td>{column.column_name}</td>
-                <td>{column.data_type}</td>
-                <td>{column.isFK && <BranchesOutlined />}</td>
-              </tr>
-            ))}
+            <tbody>
+              {table.columns.map((column) => (
+                <tr
+                  key={column.column_name}
+                  id={`${table.name}-${column.column_name}`}
+                >
+                  <td>{column.column_name}</td>
+                  <td>{column.data_type}</td>
+                  <td>
+                    {column.isPK && <KeyOutlined />}
+                    {column.isFK && <BranchesOutlined />}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </Card>
       ))}
+      {drawConnections()}
     </div>
   );
 };
