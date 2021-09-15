@@ -1,10 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
 import Link from "next/link";
-import { Collapse, Tag, Layout, Table } from "antd";
+import { Collapse, Tag, Layout, Table, Card } from "antd";
 import ConnectionData from "../utils/context/ConnectionDataContext";
 import sql from "sql-template-strings";
 import { Container } from "../components/Container";
 import { table } from "console";
+import App from "../components/App/App";
 const { Header, Content, Sider } = Layout;
 
 const { Panel } = Collapse;
@@ -35,20 +36,15 @@ function Home() {
   }, []);
 
   return (
-    <React.Fragment>
-      <Header>
-        <Link href="/connections/add">add connection</Link>
-      </Header>
-      <Container>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {tables.map(({ tablename }) => (
-            <Link key={tablename} href={`/table/${tablename}`}>
-              {tablename}
-            </Link>
-          ))}
-        </div>
-      </Container>
-    </React.Fragment>
+    <Card>
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {tables.map(({ tablename }) => (
+          <Link key={tablename} href={`/table/${tablename}`}>
+            {tablename}
+          </Link>
+        ))}
+      </div>
+    </Card>
   );
 }
 

@@ -4,6 +4,9 @@ import Head from "next/head";
 
 import "antd/dist/antd.css";
 import ConnectionData from "../utils/context/ConnectionDataContext";
+import AddConnection from "./connections/add";
+import App from "../components/App/App";
+import { Container } from "../components/Container";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const [connectionData, setConnectionData] = useState(null);
@@ -14,7 +17,16 @@ function MyApp({ Component, pageProps }: AppProps) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>RocketDB</title>
       </Head>
-      <Component {...pageProps} />
+
+      {!connectionData ? (
+        <Container>
+          <AddConnection />
+        </Container>
+      ) : (
+        <App>
+          <Component {...pageProps} />
+        </App>
+      )}
     </ConnectionData.Provider>
   );
 }

@@ -11,8 +11,16 @@ class Connection {
     public connectionString
   ) {
     if (connectionString) {
+      console.info("Connecting with: " + connectionString);
       this.client = new Client({ connectionString });
     } else {
+      console.info("connecting with ", {
+        user: user,
+        host: server,
+        database: database,
+        password: userPassword,
+        port: port,
+      });
       this.client = new Client({
         user: user,
         host: server,

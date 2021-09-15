@@ -45,10 +45,16 @@ export const AddConnection = () => {
     fetchConnections();
   }, []);
   const onFinish = async () => {
-    await testConnection();
+    await testConnection(
+      { user, server, database, userPassword, port, connectionString },
+      () => {}
+    );
   };
 
-  const testConnection = async () => {
+  const testConnection = async (
+    { user, server, database, userPassword, port, connectionString },
+    cb
+  ) => {
     // clients will also use environment variables
     // for connection information
     const connection = new Connection(
@@ -64,6 +70,7 @@ export const AddConnection = () => {
       await connection.client.query("SELECT NOW()");
       setConnectionTested(true);
       setConnectionData(connection);
+      cb();
     } catch (err) {
       console.error(err);
     }
@@ -115,96 +122,106 @@ export const AddConnection = () => {
 
   return (
     <>
-      <Container>
-        <Card>
-          <Form onFinish={onFinish}>
-            <Item>
-              <Input
-                placeholder="Server"
-                value={server}
-                onChange={(e) => setServer(e.target.value)}
-              />
-            </Item>
-            <Item>
-              <Input
-                placeholder="Port"
-                value={port}
-                onChange={(e) => setPort(e.target.value)}
-              />
-            </Item>
-            <Item>
-              <Input
-                placeholder="Database"
-                value={database}
-                onChange={(e) => setDatabase(e.target.value)}
-              />
-            </Item>
-            <Item>
-              <Input
-                placeholder="User"
-                value={user}
-                onChange={(e) => setUser(e.target.value)}
-              />
-            </Item>
-            <Item>
-              <Input
-                placeholder="User Password"
-                value={userPassword}
-                onChange={(e) => setUserPassword(e.target.value)}
-              />
-            </Item>
-            OR
-            <Item>
-              <Input
-                placeholder="Connection String"
-                value={connectionString}
-                onChange={(e) => setConnectionString(e.target.value)}
-              />
-            </Item>
-            <Item>
-              {!connectionTested ? (
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  className="login-form-button"
-                >
-                  Test Connection
+      <Card>
+        <Form onFinish={onFinish}>
+          <Item>
+            <Input
+              placeholder="Server"
+              value={server}
+              onChange={(e) => setServer(e.target.value)}
+            />
+          </Item>
+          <Item>
+            <Input
+              placeholder="Port"
+              value={port}
+              onChange={(e) => setPort(e.target.value)}
+            />
+          </Item>
+          <Item>
+            <Input
+              placeholder="Database"
+              value={database}
+              onChange={(e) => setDatabase(e.target.value)}
+            />
+          </Item>
+          <Item>
+            <Input
+              placeholder="User"
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+            />
+          </Item>
+          <Item>
+            <Input
+              placeholder="User Password"
+              value={userPassword}
+              onChange={(e) => setUserPassword(e.target.value)}
+            />
+          </Item>
+          OR
+          <Item>
+            <Input
+              placeholder="Connection String"
+              value={connectionString}
+              onChange={(e) => setConnectionString(e.target.value)}
+            />
+          </Item>
+          <Item>
+            {!connectionTested ? (
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="login-form-button"
+              >
+                Test Connection
+              </Button>
+            ) : (
+              <>
+                <Button onClick={() => saveConnection()}>Save</Button>
+                <Button>
+                  <Link href={`/schema`}>Schema</Link>
                 </Button>
-              ) : (
-                <>
-                  <Button onClick={() => saveConnection()}>Save</Button>
-                  <Button>
-                    <Link href={`/schema`}>Schema</Link>
-                  </Button>
-                </>
-              )}
-              <Button onClick={() => fetchConnections()}>read</Button>
-            </Item>
-          </Form>
-        </Card>
-        <Card style={{ marginTop: "100px" }}>
-          <h2>Saved Connections</h2>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {Object.keys(savedConnections)?.map((connectionName) => (
-              <div style={{ display: "flex", flexDirection: "row" }}>
-                <Button
-                  style={{ marginRight: "50px" }}
-                  onClick={() => {
-                    setConnectionString(
-                      `postgresql://${savedConnections[connectionName].user}:${savedConnections[connectionName].password}@${savedConnections[connectionName].host}:${savedConnections[connectionName].port}/${savedConnections[connectionName].database}`
-                    );
-                    testConnection();
-                    router.push("/schema");
-                  }}
-                >
-                  Connect to {connectionName}
-                </Button>
-                <code>{`postgresql://${savedConnections[connectionName].user}:${savedConnections[connectionName].password}@${savedConnections[connectionName].host}:${savedConnections[connectionName].port}/${savedConnections[connectionName].database}`}</code>
-              </div>
-            ))}
-          </div>
-        </Card>
-      </Container>
+              </>
+            )}
+            <Button onClick={() => fetchConnections()}>read</Button>
+          </Item>
+        </Form>
+      </Card>
+      <Card style={{ marginTop: "100px" }}>
+        <h2>Saved Connections</h2>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {Object.keys(savedConnections)?.map((connectionName) => (
+            <div style={{ display: "flex", flexDirection: "row" }}>
+              <Button
+                style={{ marginRight: "50px" }}
+                onClick={() => {
+                  setServer(savedConnections[connectionName].host);
+                  setPort(savedConnections[connectionName].port);
+                  setUser(savedConnections[connectionName].user);
+                  setDatabase(savedConnections[connectionName].database);
+                  setUserPassword(savedConnections[connectionName].password);
+
+                  testConnection(
+                    {
+                      server: savedConnections[connectionName].host,
+                      port: savedConnections[connectionName].port,
+                      user: savedConnections[connectionName].user,
+                      database: savedConnections[connectionName].database,
+                      userPassword: savedConnections[connectionName].password,
+                      connectionString: undefined,
+                    },
+                    () => router.push("/schema")
+                  );
+                }}
+              >
+                Connect to {connectionName}
+              </Button>
+              <code>{`postgresql://${savedConnections[connectionName].user}:${savedConnections[connectionName].password}@${savedConnections[connectionName].host}:${savedConnections[connectionName].port}/${savedConnections[connectionName].database}`}</code>
+            </div>
+          ))}
+        </div>
+      </Card>
     </>
   );
 };
